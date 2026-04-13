@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Aktie Dashboard - Harry</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+        }
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .last-updated {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .stock-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .stock-symbol {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        .price {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2d3748;
+            margin: 10px 0;
+        }
+        .change {
+            font-size: 1.1em;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .positive { background: #c6f6d5; color: #22543d; }
+        .negative { background: #fed7d7; color: #742a2a; }
+        .signal {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        .buy {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+        .sell {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+        }
+        .hold {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+        .indicators {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .indicator {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #4a5568;
+        }
+        .section-title {
+            color: white;
+            font-size: 1.5em;
+            margin: 40px 0 20px 0;
+            padding-left: 10px;
+            border-left: 4px solid white;
+        }
+        .crypto-section {
+            margin-top: 20px;
+        }
+        footer {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Aktie Dashboard</h1>
+            <p>AI-driven teknisk analys • Realtime data</p>
+            <div class="last-updated">
+                Senast uppdaterad: <span id="datetime"></span>
+            </div>
+        </header>
+
+        <h2 class="section-title">🟢 Köprekommendationer</h2>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">MARA Holdings</div>
+                        <div class="stock-symbol">MARA</div>
+                    </div>
+                </div>
+                <div class="price">$9.54</div>
+                <span class="change negative">-1.34%</span>
+                <div class="signal buy">🟢 KÖP - Stark signal</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>RSI</span>
+                        <span>Neutral</span>
+                    </div>
+                    <div class="indicator">
+                        <span>Trend</span>
+                        <span>Stark uppåt</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Visa Inc.</div>
+                        <div class="stock-symbol">V</div>
+                    </div>
+                </div>
+                <div class="price">$320.45</div>
+                <span class="change positive">+0.85%</span>
+                <div class="signal buy">🟢 KÖP - Stabil</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>Sektor</span>
+                        <span>Betalningar</span>
+                    </div>
+                    <div class="indicator">
+                        <span>Status</span>
+                        <span>Starkt köp</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">🔴 Säljrekommendationer</h2>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Tesla</div>
+                        <div class="stock-symbol">TSLA</div>
+                    </div>
+                </div>
+                <div class="price">$348.95</div>
+                <span class="change positive">+0.96%</span>
+                <div class="signal sell">🔴 SÄLJ - Death Cross</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>Signal</span>
+                        <span>Baisse trend</span>
+                    </div>
+                    <div class="indicator">
+                        <span>52v nivå</span>
+                        <span>Nära botten</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Microsoft</div>
+                        <div class="stock-symbol">MSFT</div>
+                    </div>
+                </div>
+                <div class="price">$370.87</div>
+                <span class="change negative">-0.59%</span>
+                <div class="signal sell">🔴 SÄLJ - Death Cross</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>Signal</span>
+                        <span>Baisse trend</span>
+                    </div>
+                    <div class="indicator">
+                        <span>52v nivå</span>
+                        <span>104% av topp</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Amazon</div>
+                        <div class="stock-symbol">AMZN</div>
+                    </div>
+                </div>
+                <div class="price">$238.38</div>
+                <span class="change positive">+2.02%</span>
+                <div class="signal sell">🔴 SÄLJ - RSI Överköpt</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>RSI</span>
+                        <span>75.3 (Överköpt)</span>
+                    </div>
+                    <div class="indicator">
+                        <span>Status</span>
+                        <span>96.7% av 52v topp</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">⚪ Behåll/Neutral</h2>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Apple</div>
+                        <div class="stock-symbol">AAPL</div>
+                    </div>
+                </div>
+                <div class="price">$260.48</div>
+                <span class="change">0.00%</span>
+                <div class="signal hold">⚪ HOLD - Vänta</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Alphabet</div>
+                        <div class="stock-symbol">GOOGL</div>
+                    </div>
+                </div>
+                <div class="price">$317.24</div>
+                <span class="change negative">-0.39%</span>
+                <div class="signal hold">⚪ HOLD - Neutral</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Meta</div>
+                        <div class="stock-symbol">META</div>
+                    </div>
+                </div>
+                <div class="price">$629.86</div>
+                <span class="change positive">+0.23%</span>
+                <div class="signal hold">⚪ HOLD - Neutral</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">NVIDIA</div>
+                        <div class="stock-symbol">NVDA</div>
+                    </div>
+                </div>
+                <div class="price">$188.63</div>
+                <span class="change positive">+2.57%</span>
+                <div class="signal hold">⚪ HOLD - Nära topp</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>Status</span>
+                        <span>96.5% av 52v topp</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Palantir</div>
+                        <div class="stock-symbol">PLTR</div>
+                    </div>
+                </div>
+                <div class="price">$128.06</div>
+                <span class="change negative">-1.86%</span>
+                <div class="signal hold">⚪ HOLD - Nära botten</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>Status</span>
+                        <span>100% av 52v botten</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">₿ Krypto (24/7)</h2>
+        <div class="grid crypto-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Bitcoin</div>
+                        <div class="stock-symbol">BTC</div>
+                    </div>
+                </div>
+                <div class="price">$67,234</div>
+                <span class="change positive">+2.34%</span>
+                <div class="signal hold">⚪ NEUTRAL</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Ethereum</div>
+                        <div class="stock-symbol">ETH</div>
+                    </div>
+                </div>
+                <div class="price">$3,456</div>
+                <span class="change positive">+1.56%</span>
+                <div class="signal hold">⚪ NEUTRAL</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Solana</div>
+                        <div class="stock-symbol">SOL</div>
+                    </div>
+                </div>
+                <div class="price">$145.67</div>
+                <span class="change negative">-0.89%</span>
+                <div class="signal hold">⚪ NEUTRAL</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🤖 Genererad av AktieBot • AI-driven teknisk analys</p>
+            <p>Data: Yahoo Finance • Uppdateras: Var 15:e minut 08-22, varje timme nattetid</p>
+        </footer>
+    </div>
+
+    <script>
+        // Uppdatera datum/tid
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleDateString('sv-SE', options);
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+    </script>
+</body>
+</html>
