@@ -130,24 +130,6 @@
             margin-top: 40px;
             opacity: 0.8;
         }
-        .alert-box {
-            background: rgba(255,255,255,0.95);
-            border-radius: 16px;
-            padding: 30px;
-            margin: 30px 0;
-            border-left: 5px solid #f56565;
-        }
-        .alert-box h2 {
-            color: #c53030;
-            margin-bottom: 15px;
-        }
-        .alert-item {
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .alert-item:last-child {
-            border-bottom: none;
-        }
     </style>
 </head>
 <body>
@@ -159,13 +141,6 @@
                 Senast uppdaterad: <span id="datetime"></span>
             </div>
         </header>
-
-        <div class="alert-box">
-            <h2>⚠️ Viktiga Larm</h2>
-            <div class="alert-item">🔴 <strong>TSLA</strong> - Death Cross aktiv (baisse trend)</div>
-            <div class="alert-item">🔴 <strong>MSFT</strong> - Death Cross aktiv (baisse trend)</div>
-            <div class="alert-item">⚠️ <strong>SQ</strong> - Ingen data tillgänglig (kontrollera ticker)</div>
-        </div>
 
         <div class="mc-section" style="background: linear-gradient(135deg, #1a365d, #2c5282); border-radius: 16px; padding: 30px; margin: 30px 0; color: white;">
             <h2 style="margin-bottom: 20px;">🎲 Monte Carlo Prognos (30 dagar)</h2>
@@ -250,6 +225,28 @@
                     <div class="indicator">
                         <span>Trend</span>
                         <span>Stark uppåt</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="stock-name">Visa Inc.</div>
+                        <div class="stock-symbol">V</div>
+                    </div>
+                </div>
+                <div class="price">$320.45</div>
+                <span class="change positive">+0.85%</span>
+                <div class="signal buy">🟢 KÖP - Stabil</div>
+                <div class="indicators">
+                    <div class="indicator">
+                        <span>Sektor</span>
+                        <span>Betalningar</span>
+                    </div>
+                    <div class="indicator">
+                        <span>Status</span>
+                        <span>Starkt köp</span>
                     </div>
                 </div>
             </div>
@@ -406,28 +403,6 @@
             <div class="card">
                 <div class="card-header">
                     <div>
-                        <div class="stock-name">Visa Inc.</div>
-                        <div class="stock-symbol">V</div>
-                    </div>
-                </div>
-                <div class="price">$320.45</div>
-                <span class="change positive">+0.85%</span>
-                <div class="signal hold">⚪ HOLD - Stabil</div>
-                <div class="indicators">
-                    <div class="indicator">
-                        <span>Sektor</span>
-                        <span>Betalningar</span>
-                    </div>
-                    <div class="indicator">
-                        <span>Status</span>
-                        <span>Starkt köp</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <div>
                         <div class="stock-name">Meta</div>
                         <div class="stock-symbol">META</div>
                     </div>
@@ -534,7 +509,7 @@
             document.getElementById('datetime').textContent = now.toLocaleDateString('sv-SE', options);
         }
         updateDateTime();
-        setInterval(updateDateTime, 60000); // Uppdatera varje minut
+        setInterval(updateDateTime, 60000);
     </script>
 </body>
 </html>
