@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AktieBot v3.0 - Integrerad AI Analys</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header p { opacity: 0.9; font-size: 1.1em; }
+        .last-updated {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        
+        .main-score-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .score-display {
+            font-size: 5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .recommendation {
+            font-size: 1.8em;
+            margin-top: 20px;
+            padding: 15px 30px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        .rec-strong-buy { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
+        .rec-buy { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .rec-hold { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .rec-sell { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .rec-strong-sell { background: linear-gradient(135deg, #991b1b, #dc2626); box-shadow: 0 0 30px rgba(220, 38, 38, 0.5); }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .metric:last-child { border-bottom: none; }
+        .metric-label { color: #94a3b8; }
+        .metric-value { font-weight: bold; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        .neutral { color: #fbbf24; }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        @media (max-width: 1200px) {
+            .component-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .component-grid { grid-template-columns: 1fr; }
+            .grid { grid-template-columns: 1fr; }
+            .score-display { font-size: 3em; }
+        }
+        .component-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .component-score {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .component-label {
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .fill-excellent { background: linear-gradient(90deg, #22c55e, #4ade80); }
+        .fill-good { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .fill-poor { background: linear-gradient(90deg, #ef4444, #f87171); }
+        
+        .risk-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 10px 5px;
+        }
+        .risk-low { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .risk-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .risk-high { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        
+        .insights-box {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+        .insight-item {
+            padding: 8px 0;
+            color: #cbd5e1;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            color: white;
+            font-size: 1em;
+        }
+        .tab:hover { background: rgba(255,255,255,0.2); }
+        .tab.active { background: #667eea; }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stock-selector {
+            margin: 20px 0;
+        }
+        .stock-selector select {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+        }
+        .stock-selector select option {
+            background: #1e293b;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 20px 5px;
+            transition: all 0.3s;
+        }
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left-color: #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #f87171;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 40px;
+            opacity: 0.8;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-links {
+            margin: 20px 0;
+        }
+        .footer-links a {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 24px;
+            background: rgba(102, 126, 234, 0.3);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+        }
+        .footer-links a:hover {
+            background: rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AktieBot v3.0</h1>
+            <p>AI-driven Integrerad Analys | Teknisk + Fundamental + Sentiment + Orderdjup</p>
+            <div class="last-updated">
+                Senast uppdaterad: <span id="last-updated-time">Laddar...</span>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="refresh-btn" onclick="refreshData()">🔄 Uppdatera Nu</button>
+                <button class="refresh-btn" onclick="toggleAutoRefresh()" id="auto-refresh-btn">⏸️ Pausa Auto</button>
+            </div>
+        </header>
+
+        <!-- STOCK SELECTOR -->
+        <div class="stock-selector">
+            <label style="color: #94a3b8; margin-right: 10px;">Välj Aktie:</label>
+            <select id="stock-select" onchange="switchStock()">
+                <option value="">Laddar aktier...</option>
+            </select>
+        </div>
+
+        <!-- MAIN SCORE -->
+        <div class="main-score-card" id="main-score-card">
+            <div style="margin-bottom: 20px; color: #94a3b8;">Integrerad Analys Score</div>
+            <div class="score-display" id="main-score">--</div>
+            <div class="recommendation rec-hold" id="main-recommendation">
+                Laddar...
+            </div>
+            <div style="margin-top: 20px; color: #94a3b8;">
+                Konfidens: <span id="confidence" style="color: #4ade80; font-weight: bold;">--%</span>
+            </div>
+        </div>
+
+        <!-- COMPONENT SCORES -->
+        <div class="component-grid" id="component-grid">
+            <div class="component-card">
+                <div class="component-label">📈 Teknisk</div>
+                <div class="component-score" id="tech-score" style="color: #94a3b8;">--</div>
+                <div class="progress-bar"><div class="progress-fill" id="tech-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="component-card">
+                <div class="component-label">📊 Fundamental</div>
+                <div class="component-score" id="fund-score" style="color: #94a3b8;">--</div>
+                <div class="progress-bar"><div class="progress-fill" id="fund-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="component-card">
+                <div class="component-label">💬 Sentiment</div>
+                <div class="component-score" id="sent-score" style="color: #94a3b8;">--</div>
+                <div class="progress-bar"><div class="progress-fill" id="sent-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="component-card">
+                <div class="component-label">📚 Orderdjup</div>
+                <div class="component-score" id="order-score" style="color: #94a3b8;">--</div>
+                <div class="progress-bar"><div class="progress-fill" id="order-bar" style="width: 0%"></div></div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')">📊 Översikt</button>
+            <button class="tab" onclick="showTab('technical')">📈 Teknisk</button>
+            <button class="tab" onclick="showTab('fundamental')">📊 Fundamental</button>
+            <button class="tab" onclick="showTab('sentiment')">💬 Sentiment</button>
+            <button class="tab" onclick="showTab('orderbook')">📚 Orderdjup</button>
+        </div>
+
+        <!-- TAB CONTENT: OVERVIEW -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="grid">
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h3>📊 AI Analysinsikt</h3>
+                    <div id="insights-container">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            Laddar analys...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>⚠️ Riskbedömning</h3>
+                    <div style="text-align: center;" id="risk-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>💰 Prisinfo</h3>
+                    <div id="price-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: TECHNICAL -->
+        <div id="tab-technical" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>📈 Tekniska Indikatorer</h3>
+                    <div id="technical-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📉 Trend-analys</h3>
+                    <div id="trend-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: FUNDAMENTAL -->
+        <div id="tab-fundamental" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>💰 Värdering</h3>
+                    <div id="valuation-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📊 Lönsamhet</h3>
+                    <div id="profitability-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>🏦 Balans</h3>
+                    <div id="balance-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: SENTIMENT -->
+        <div id="tab-sentiment" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>👥 Analytiker</h3>
+                    <div id="analyst-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>💬 Nyheter & Sentiment</h3>
+                    <div id="news-sentiment-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT: ORDERBOOK -->
+        <div id="tab-orderbook" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>📚 Orderdjup</h3>
+                    <div id="orderbook-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>⚡ Tryck (Pressure)</h3>
+                    <div id="pressure-container">
+                        <div class="loading">Laddar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-links">
+                <a href="index.html">📊 Dashboard</a>
+                <a href="mc_dashboard.html">🎲 Monte Carlo</a>
+                <a href="news.html">📰 Nyheter</a>
+                <a href="AKTIEBOT_DASHBOARD.html">🤖 Integrerad AI</a>
+            </div>
+            <p>🤖 AktieBot v3.0 | AI-driven teknisk analys</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                ⚠️ Använd som beslutsstöd. Ej finansiell rådgivning.
+            </p>
+            <p style="font-size: 0.8em; margin-top: 10px; opacity: 0.6;">
+                Data uppdateras automatiskt varje morgon kl 08:30
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Data - laddas från JSON eller använder fallback
+        let ANALYSIS_DATA = null;
+        let ALL_STOCKS = [];
+        let CURRENT_STOCK = null;
+        let AUTO_REFRESH = true;
+        
+        // Fallback-exempeldata om JSON inte finns
+        const FALLBACK_DATA = {
+            "generated_at": "2026-04-13T08:30:00",
+            "total_stocks": 5,
+            "best_stock": "MARA",
+            "results": [
+                {
+                    "symbol": "MARA",
+                    "timestamp": "2026-04-13T08:30:00",
+                    "integrated_score": 78,
+                    "component_scores": {
+                        "technical": 82,
+                        "fundamental": 75,
+                        "sentiment": 68,
+                        "orderbook": 71
+                    },
+                    "confidence": 0.85,
+                    "recommendation": {
+                        "action": "STRONG BUY",
+                        "emoji": "🟢🟢",
+                        "score": 78,
+                        "confidence": 0.85,
+                        "rationale": "Utmärkt integrerad analys - starka signaler från alla perspektiv",
+                        "timeframe": "Medium-term (1-3 månader)"
+                    },
+                    "risk": {
+                        "risk_level": "ELEVATED",
+                        "risk_emoji": "🟠",
+                        "risk_score": 65,
+                        "risk_factors": ["Teknisk: Nära 52v topp", "Fundamental: Hög beta (volatilitet)"]
+                    },
+                    "technical": {
+                        "current_price": 9.54,
+                        "rsi": 58.3,
+                        "ema_20": 9.12,
+                        "ema_50": 8.45,
+                        "high_52w": 12.50,
+                        "low_52w": 3.20,
+                        "signals": ["Golden Cross aktiv", "Nära 52v topp", "Stark trend"]
+                    },
+                    "fundamental": {
+                        "pe_ratio": 12.4,
+                        "peg_ratio": 0.8,
+                        "roe": 0.18,
+                        "profit_margin": 0.15,
+                        "debt_to_equity": 45,
+                        "revenue_growth": 0.25,
+                        "beta": 1.8,
+                        "grade": "B (Bra)"
+                    },
+                    "sentiment": {
+                        "combined_label": "POSITIVE",
+                        "analyst_label": "BUY",
+                        "buy_percentage": 75,
+                        "target_price": 11.50,
+                        "social_mentions": 8900
+                    },
+                    "orderbook": {
+                        "spread_pct": 0.12,
+                        "liquidity_score": 65,
+                        "buying_pressure": 0.68,
+                        "depth_imbalance": 0.25
+                    }
+                },
+                {
+                    "symbol": "AAPL",
+                    "timestamp": "2026-04-13T08:30:00",
+                    "integrated_score": 72,
+                    "component_scores": {
+                        "technical": 70,
+                        "fundamental": 85,
+                        "sentiment": 75,
+                        "orderbook": 88
+                    },
+                    "confidence": 0.90,
+                    "recommendation": {
+                        "action": "BUY",
+                        "emoji": "🟢",
+                        "score": 72,
+                        "confidence": 0.90,
+                        "rationale": "Goda fundamentala med stabil tillväxt",
+                        "timeframe": "Medium-term (1-3 månader)"
+                    },
+                    "risk": {
+                        "risk_level": "LOW",
+                        "risk_emoji": "🟢",
+                        "risk_score": 35,
+                        "risk_factors": ["Inga större risker identifierade"]
+                    },
+                    "technical": {
+                        "current_price": 187.45,
+                        "rsi": 58.3,
+                        "ema_20": 182.12,
+                        "ema_50": 175.34,
+                        "high_52w": 198.23,
+                        "low_52w": 142.56,
+                        "signals": ["Golden Cross aktiv", "Nära 52v topp"]
+                    },
+                    "fundamental": {
+                        "pe_ratio": 28.5,
+                        "peg_ratio": 1.4,
+                        "roe": 0.25,
+                        "profit_margin": 0.22,
+                        "debt_to_equity": 35,
+                        "revenue_growth": 0.08,
+                        "beta": 1.12,
+                        "grade": "A (Utmärkt)"
+                    },
+                    "sentiment": {
+                        "combined_label": "POSITIVE",
+                        "analyst_label": "BUY",
+                        "buy_percentage": 85,
+                        "target_price": 215.00,
+                        "social_mentions": 12500
+                    },
+                    "orderbook": {
+                        "spread_pct": 0.01,
+                        "liquidity_score": 95,
+                        "buying_pressure": 0.55,
+                        "depth_imbalance": 0.10
+                    }
+                },
+                {
+                    "symbol": "TSLA",
+                    "timestamp": "2026-04-13T08:30:00",
+                    "integrated_score": 45,
+                    "component_scores": {
+                        "technical": 35,
+                        "fundamental": 55,
+                        "sentiment": 60,
+                        "orderbook": 50
+                    },
+                    "confidence": 0.75,
+                    "recommendation": {
+                        "action": "HOLD",
+                        "emoji": "⚪",
+                        "score": 45,
+                        "confidence": 0.75,
+                        "rationale": "Neutrala signaler - vänta på tydligare riktning",
+                        "timeframe": "Medium-term (1-3 månader)"
+                    },
+                    "risk": {
+                        "risk_level": "HIGH",
+                        "risk_emoji": "🔴",
+                        "risk_score": 85,
+                        "risk_factors": ["Teknisk: Death Cross", "Fundamental: Hög beta", "Sentiment: Delade analytiker"]
+                    },
+                    "technical": {
+                        "current_price": 248.50,
+                        "rsi": 42.1,
+                        "ema_20": 255.30,
+                        "ema_50": 260.15,
+                        "high_52w": 299.29,
+                        "low_52w": 138.80,
+                        "signals": ["Death Cross aktiv", "RSI neutral"]
+                    },
+                    "fundamental": {
+                        "pe_ratio": 65.2,
+                        "peg_ratio": 2.1,
+                        "roe": 0.12,
+                        "profit_margin": 0.08,
+                        "debt_to_equity": 28,
+                        "revenue_growth": 0.15,
+                        "beta": 2.4,
+                        "grade": "C (Acceptabel)"
+                    },
+                    "sentiment": {
+                        "combined_label": "NEUTRAL",
+                        "analyst_label": "HOLD",
+                        "buy_percentage": 45,
+                        "target_price": 275.00,
+                        "social_mentions": 15420
+                    },
+                    "orderbook": {
+                        "spread_pct": 0.08,
+                        "liquidity_score": 78,
+                        "buying_pressure": 0.45,
+                        "depth_imbalance": -0.05
+                    }
+                }
+            ]
+        };
+
+        // Ladda data vid start
+        async function loadData() {
+            try {
+                // Försök ladda från JSON-fil
+                const response = await fetch('analysis_data.json');
+                if (response.ok) {
+                    ANALYSIS_DATA = await response.json();
+                    console.log('✅ Laddade data från JSON');
+                } else {
+                    throw new Error('JSON-fil inte hittad');
+                }
+            } catch (error) {
+                console.log('⚠️ Använder exempeldata (kör Python-skript för riktig data)');
+                ANALYSIS_DATA = FALLBACK_DATA;
+            }
+            
+            // Fyll dropdown
+            populateStockSelector();
+            
+            // Visa bästa aktien som default
+            if (ANALYSIS_DATA.best_stock) {
+                selectStock(ANALYSIS_DATA.best_stock);
+            } else if (ANALYSIS_DATA.results && ANALYSIS.results.length > 0) {
+                selectStock(ANALYSIS_DATA.results[0].symbol);
+            }
+        }
+
+        // Fyll stock selector
+        function populateStockSelector() {
+            const select = document.getElementById('stock-select');
+            select.innerHTML = '';
+            
+            if (ANALYSIS_DATA && ANALYSIS_DATA.results) {
+                ANALYSIS_DATA.results.forEach(stock => {
+                    if (!stock.error) {
+                        const option = document.createElement('option');
+                        option.value = stock.symbol;
+                        option.textContent = `${stock.symbol} (Score: ${stock.integrated_score})`;
+                        select.appendChild(option);
+                    }
+                });
+            }
+        }
+
+        // Välj aktie
+        function selectStock(symbol) {
+            CURRENT_STOCK = symbol;
+            document.getElementById('stock-select').value = symbol;
+            
+            const stockData = ANALYSIS_DATA.results.find(s => s.symbol === symbol);
+            if (stockData) {
+                updateDashboard(stockData);
+            }
+        }
+
+        // Byta aktie från dropdown
+        function switchStock() {
+            const symbol = document.getElementById('stock-select').value;
+            if (symbol) {
+                selectStock(symbol);
+            }
+        }
+
+        // Uppdatera hela dashboarden
+        function updateDashboard(data) {
+            // Huvudinfo
+            document.getElementById('main-score').textContent = data.integrated_score;
+            document.getElementById('confidence').textContent = Math.round(data.confidence * 100) + '%';
+            
+            // Rekommendation
+            const recEl = document.getElementById('main-recommendation');
+            if (data.recommendation) {
+                recEl.textContent = data.recommendation.emoji + ' ' + data.recommendation.action;
+                recEl.className = 'recommendation rec-' + data.recommendation.action.toLowerCase().replace(/ /g, '-');
+            }
+            
+            // Timestamp
+            if (ANALYSIS_DATA.generated_at) {
+                const date = new Date(ANALYSIS_DATA.generated_at);
+                document.getElementById('last-updated-time').textContent = date.toLocaleString('sv-SE');
+            }
+            
+            // Komponenter
+            if (data.component_scores) {
+                updateComponent('tech', data.component_scores.technical);
+                updateComponent('fund', data.component_scores.fundamental);
+                updateComponent('sent', data.component_scores.sentiment);
+                updateComponent('order', data.component_scores.orderbook);
+            }
+            
+            // Alla sektioner
+            updateOverview(data);
+            updateTechnical(data);
+            updateFundamental(data);
+            updateSentiment(data);
+            updateOrderbook(data);
+        }
+
+        // Uppdatera komponent-kort
+        function updateComponent(prefix, score) {
+            const scoreEl = document.getElementById(prefix + '-score');
+            const barEl = document.getElementById(prefix + '-bar');
+            
+            if (scoreEl && score !== undefined) {
+                scoreEl.textContent = score;
+                scoreEl.style.color = score >= 70 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+            }
+            
+            if (barEl) {
+                barEl.style.width = score + '%';
+                barEl.className = 'progress-fill ' + (score >= 70 ? 'fill-excellent' : score >= 50 ? 'fill-good' : 'fill-poor');
+            }
+        }
+
+        // Översikt
+        function updateOverview(data) {
+            // Insights
+            let insightsHTML = '';
+            
+            if (data.technical && data.technical.signals) {
+                insightsHTML += '<div class="insights-box"><div class="insight-item"><strong>📈 Tekniska Signaler:</strong></div>';
+                data.technical.signals.forEach(signal => {
+                    insightsHTML += `<div class="insight-item">• ${signal}</div>`;
+                });
+                insightsHTML += '</div>';
+            }
+            
+            if (data.recommendation) {
+                insightsHTML += `<div class="insights-box"><div class="insight-item"><strong>💡 Rekommendation:</strong></div>`;
+                insightsHTML += `<div class="insight-item">${data.recommendation.rationale}</div>`;
+                insightsHTML += `<div class="insight-item">⏰ Tidsram: ${data.recommendation.timeframe}</div></div>`;
+            }
+            
+            document.getElementById('insights-container').innerHTML = insightsHTML || '<div class="insight-item">Inga insikter tillgängliga</div>';
+            
+            // Risk
+            if (data.risk) {
+                let riskHTML = '';
+                riskHTML += `<div class="risk-indicator risk-${data.risk.risk_level.toLowerCase().replace(/ /g, '-')}">`;
+                riskHTML += `<span>${data.risk.risk_emoji}</span> Risknivå: ${data.risk.risk_level}</div>`;
+                riskHTML += `<div style="margin: 15px 0; color: #94a3b8;">Risk Score: ${data.risk.risk_score}/100</div>`;
+                riskHTML += '<div class="insights-box">';
+                data.risk.risk_factors.forEach(factor => {
+                    riskHTML += `<div class="insight-item">• ${factor}</div>`;
+                });
+                riskHTML += '</div>';
+                document.getElementById('risk-container').innerHTML = riskHTML;
+            }
+            
+            // Pris
+            if (data.technical) {
+                let priceHTML = '';
+                priceHTML += `<div class="metric"><span class="metric-label">Nuvarande Pris</span><span class="metric-value">$${data.technical.current_price}</span></div>`;
+                priceHTML += `<div class="metric"><span class="metric-label">52v Högsta</span><span class="metric-value">$${data.technical.high_52w}</span></div>`;
+                priceHTML += `<div class="metric"><span class="metric-label">52v Lägsta</span><span class="metric-value">$${data.technical.low_52w}</span></div>`;
+                
+                const position = ((data.technical.current_price - data.technical.low_52w) / (data.technical.high_52w - data.technical.low_52w) * 100).toFixed(1);
+                priceHTML += `<div class="metric"><span class="metric-label">Position 52v</span><span class="metric-value">${position}%</span></div>`;
+                
+                document.getElementById('price-container').innerHTML = priceHTML;
+            }
+        }
+
+        // Teknisk
+        function updateTechnical(data) {
+            if (data.technical) {
+                let techHTML = '';
+                techHTML += `<div class="metric"><span class="metric-label">RSI (14)</span><span class="metric-value ${data.technical.rsi > 70 ? 'negative' : data.technical.rsi < 30 ? 'positive' : 'neutral'}">${data.technical.rsi}</span></div>`;
+                techHTML += `<div class="metric"><span class="metric-label">EMA 20</span><span class="metric-value">$${data.technical.ema_20}</span></div>`;
+                techHTML += `<div class="metric"><span class="metric-label">EMA 50</span><span class="metric-value">$${data.technical.ema_50}</span></div>`;
+                techHTML += `<div class="metric"><span class="metric-label">Nuvarande Pris</span><span class="metric-value">$${data.technical.current_price}</span></div>`;
+                document.getElementById('technical-container').innerHTML = techHTML;
+                
+                // Trend
+                const goldenCross = data.technical.ema_20 > data.technical.ema_50;
+                let trendHTML = '';
+                trendHTML += `<div class="metric"><span class="metric-label">Trend</span><span class="metric-value ${goldenCross ? 'positive' : 'negative'}">${goldenCross ? '📈 Haussande' : '📉 Baisse'}</span></div>`;
+                trendHTML += `<div class="metric"><span class="metric-label">Golden/Death Cross</span><span class="metric-value ${goldenCross ? 'positive' : 'negative'}">${goldenCross ? 'Golden Cross ✅' : 'Death Cross ⚠️'}</span></div>`;
+                document.getElementById('trend-container').innerHTML = trendHTML;
+            }
+        }
+
+        // Fundamental
+        function updateFundamental(data) {
+            if (data.fundamental) {
+                // Värdering
+                let valHTML = '';
+                valHTML += `<div class="metric"><span class="metric-label">P/E Ratio</span><span class="metric-value ${data.fundamental.pe_ratio < 20 ? 'positive' : 'neutral'}">${data.fundamental.pe_ratio}</span></div>`;
+                valHTML += `<div class="metric"><span class="metric-label">PEG Ratio</span><span class="metric-value ${data.fundamental.peg_ratio < 1 ? 'positive' : 'neutral'}">${data.fundamental.peg_ratio}</span></div>`;
+                valHTML += `<div class="metric"><span class="metric-label">Beta (Risk)</span><span class="metric-value ${data.fundamental.beta < 1 ? 'positive' : 'neutral'}">${data.fundamental.beta}</span></div>`;
+                valHTML += `<div class="metric"><span class="metric-label">Betyg</span><span class="metric-value">${data.fundamental.grade}</span></div>`;
+                document.getElementById('valuation-container').innerHTML = valHTML;
+                
+                // Lönsamhet
+                let profHTML = '';
+                profHTML += `<div class="metric"><span class="metric-label">ROE</span><span class="metric-value ${data.fundamental.roe > 0.15 ? 'positive' : 'neutral'}">${(data.fundamental.roe * 100).toFixed(1)}%</span></div>`;
+                profHTML += `<div class="metric"><span class="metric-label">Vinstmarginal</span><span class="metric-value ${data.fundamental.profit_margin > 0.15 ? 'positive' : 'neutral'}">${(data.fundamental.profit_margin * 100).toFixed(1)}%</span></div>`;
+                profHTML += `<div class="metric"><span class="metric-label">Omsättn.tillväxt</span><span class="metric-value ${data.fundamental.revenue_growth > 0 ? 'positive' : 'negative'}">${(data.fundamental.revenue_growth * 100).toFixed(1)}%</span></div>`;
+                document.getElementById('profitability-container').innerHTML = profHTML;
+                
+                // Balans
+                let balHTML = '';
+                balHTML += `<div class="metric"><span class="metric-label">Skuld/EK</span><span class="metric-value ${data.fundamental.debt_to_equity < 50 ? 'positive' : 'neutral'}">${data.fundamental.debt_to_equity}%</span></div>`;
+                document.getElementById('balance-container').innerHTML = balHTML;
+            }
+        }
+
+        // Sentiment
+        function updateSentiment(data) {
+            if (data.sentiment) {
+                // Analytiker
+                let anHTML = '';
+                anHTML += `<div class="metric"><span class="metric-label">Konsensus</span><span class="metric-value ${data.sentiment.analyst_label === 'BUY' || data.sentiment.analyst_label === 'STRONG BUY' ? 'positive' : data.sentiment.analyst_label === 'SELL' ? 'negative' : 'neutral'}">${data.sentiment.analyst_label}</span></div>`;
+                anHTML += `<div class="metric"><span class="metric-label">Köp-rekommendationer</span><span class="metric-value ${data.sentiment.buy_percentage > 50 ? 'positive' : 'neutral'}">${data.sentiment.buy_percentage}%</span></div>`;
+                if (data.sentiment.target_price) {
+                    anHTML += `<div class="metric"><span class="metric-label">Target Price</span><span class="metric-value">$${data.sentiment.target_price}</span></div>`;
+                }
+                document.getElementById('analyst-container').innerHTML = anHTML;
+                
+                // Sentiment
+                let sentHTML = '';
+                sentHTML += `<div class="metric"><span class="metric-label">Kombinerat Sentiment</span><span class="metric-value ${data.sentiment.combined_label === 'POSITIVE' || data.sentiment.combined_label === 'VERY_POSITIVE' ? 'positive' : data.sentiment.combined_label === 'NEGATIVE' ? 'negative' : 'neutral'}">${data.sentiment.combined_label}</span></div>`;
+                sentHTML += `<div class="metric"><span class="metric-label">Socialt Buzz (24h)</span><span class="metric-value">${data.sentiment.social_mentions?.toLocaleString() || 'N/A'} mentions</span></div>`;
+                document.getElementById('news-sentiment-container').innerHTML = sentHTML;
+            }
+        }
+
+        // Orderdjup
+        function updateOrderbook(data) {
+            if (data.orderbook) {
+                // Orderdjup
+                let ordHTML = '';
+                ordHTML += `<div class="metric"><span class="metric-label">Spread</span><span class="metric-value ${data.orderbook.spread_pct < 0.5 ? 'positive' : 'neutral'}">${data.orderbook.spread_pct}%</span></div>`;
+                ordHTML += `<div class="metric"><span class="metric-label">Liquiditet</span><span class="metric-value ${data.orderbook.liquidity_score > 70 ? 'positive' : 'neutral'}">${data.orderbook.liquidity_score}/100</span></div>`;
+                ordHTML += `<div class="metric"><span class="metric-label">Djup-obalans</span><span class="metric-value ${data.orderbook.depth_imbalance > 0 ? 'positive' : 'negative'}">${data.orderbook.depth_imbalance > 0 ? '+' : ''}${data.orderbook.depth_imbalance}</span></div>`;
+                document.getElementById('orderbook-container').innerHTML = ordHTML;
+                
+                // Tryck
+                let pressHTML = '';
+                pressHTML += `<div class="metric"><span class="metric-label">Köptryck</span><span class="metric-value ${data.orderbook.buying_pressure > 0.5 ? 'positive' : 'neutral'}">${(data.orderbook.buying_pressure * 100).toFixed(0)}%</span></div>`;
+                pressHTML += `<div class="metric"><span class="metric-label">Netto Tryck</span><span class="metric-value">${data.orderbook.buying_pressure > 0.5 ? '🟢 Köpare dominerar' : '🔴 Säljare dominerar'}</span></div>`;
+                document.getElementById('pressure-container').innerHTML = pressHTML;
+            }
+        }
+
+        // Tab-hantering
+        function showTab(tabName) {
+            // Uppdatera knappar
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Uppdatera innehåll
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // Refresh
+        async function refreshData() {
+            const btn = document.querySelector('button[onclick="refreshData()"]');
+            btn.textContent = '🔄 Laddar...';
+            btn.disabled = true;
+            
+            await loadData();
+            
+            btn.textContent = '🔄 Uppdatera Nu';
+            btn.disabled = false;
+        }
+
+        // Auto-refresh toggle
+        function toggleAutoRefresh() {
+            AUTO_REFRESH = !AUTO_REFRESH;
+            const btn = document.getElementById('auto-refresh-btn');
+            btn.textContent = AUTO_REFRESH ? '⏸️ Pausa Auto' : '▶️ Återuppta Auto';
+        }
+
+        // Auto-refresh varje 5 minuter
+        setInterval(() => {
+            if (AUTO_REFRESH) {
+                loadData();
+            }
+        }, 300000);
+
+        // Ladda vid start
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
